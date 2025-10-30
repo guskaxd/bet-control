@@ -14,12 +14,20 @@ const mysql = require("mysql2");
 */
 // Por isto:
 const pool = mysql.createPool({
+  // Lê as credenciais das variáveis de ambiente fornecidas pelo Railway
   host: process.env.MYSQLHOST,
   user: process.env.MYSQLUSER,
   password: process.env.MYSQLPASSWORD,
   database: process.env.MYSQLDATABASE,
-  port: process.env.MYSQLPORT, // O Railway também fornece a porta
-  timezone: 'America/Sao_Paulo'
+  port: process.env.MYSQLPORT,
+  
+  // Mantém a correção de fuso horário que fizemos
+  timezone: 'America/Sao_Paulo',
+
+  // Configurações padrão
+  waitForConnections: true,
+  connectionLimit: 10, 
+  queueLimit: 0,
 });
 // Testa a conexão
 pool.getConnection((err, connection) => {
