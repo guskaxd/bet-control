@@ -1,6 +1,6 @@
 const mysql = require("mysql2");
 
-const pool = mysql.createPool({
+/*const pool = mysql.createPool({
   host: "mysql",
   user: "betcontrol",
   password: "betcontrol",
@@ -11,7 +11,16 @@ const pool = mysql.createPool({
   queueLimit: 0,
   timezone: 'America/Sao_Paulo'
 });
-
+*/
+// Por isto:
+const pool = mysql.createPool({
+  host: process.env.MYSQLHOST,
+  user: process.env.MYSQLUSER,
+  password: process.env.MYSQLPASSWORD,
+  database: process.env.MYSQLDATABASE,
+  port: process.env.MYSQLPORT, // O Railway também fornece a porta
+  timezone: 'America/Sao_Paulo'
+});
 // Testa a conexão
 pool.getConnection((err, connection) => {
   if (err) {
