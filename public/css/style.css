@@ -1,0 +1,71 @@
+.kanban-col {
+  background: #f0f0f0;
+  padding: 10px;
+  min-height: 200px;
+  border-radius: 5px;
+  margin-bottom: 20px;
+}
+
+.kanban-item {
+  background: #fff;
+  border: 1px solid #ddd;
+  padding: 10px;
+  margin-bottom: 10px;
+  border-radius: 5px;
+  cursor: grab;
+}
+
+.conta-tag {
+  padding: 8px 12px;
+  border-radius: 20px;
+  background-color: #e9ecef;
+  cursor: pointer;
+  border: 1px solid #ccc;
+  transition: 0.2s;
+  user-select: none;
+}
+.conta-tag.selected {
+  background-color: #007bff;
+  color: white;
+  border-color: #007bff;
+}
+
+body {
+  padding-bottom: 60px; /* mesmo valor da altura do footer */
+}
+
+.footer {
+  height: 60px; /* altura aproximada do footer */
+}
+
+.hero {
+  background: linear-gradient(135deg, #1a202c, #2d3748);
+  color: white;
+  padding: 80px 0;
+}
+
+.hero h1 {
+  font-weight: 700;
+}
+
+.hero p {
+  font-size: 1.2rem;
+}
+
+/* Destaque do trimestral só no desktop */
+@media (min-width: 768px) {
+  .destaque-trimestral {
+    transform: scale(1.05);
+  }
+}
+
+/* No mobile, mantém o tamanho igual aos outros */
+@media (max-width: 767px) {
+  .destaque-trimestral {
+    transform: none;
+  }
+}
+.coluna-acoes {
+  width: 1%;
+  white-space: nowrap;
+}

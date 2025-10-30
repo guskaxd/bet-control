@@ -1,0 +1,77 @@
+// Estrutura de arquivos e códigos será organizada como descrito
+
+// ============================
+// Arquivo: README.md
+// ============================
+
+# Plataforma de Controle de Apostas
+
+## Requisitos
+- Node.js
+- MySQL
+
+## Instalação
+```bash
+npm install
+```
+
+## Rodar servidor
+```bash
+node backend/server.js
+```
+
+---
+
+## Estrutura de Diretórios
+```
+betcontrol/
+├── backend/
+│   ├── controllers/
+│   │   ├── adminController.js
+│   │   ├── authController.js
+│   │   ├── contaController.js
+│   │   └── lancamentoController.js
+│   ├── middlewares/
+│   │   └── protegerAdmin.js
+│   ├── models/
+│   │   ├── adminModel.js
+│   │   ├── authModel.js
+│   │   ├── contaModel.js
+│   │   └── lancamentoModel.js
+│   ├── routes/
+│   │   ├── adminRoutes.js
+│   │   ├── authRoutes.js
+│   │   ├── contaRoutes.js
+│   │   └── lancamentoRoutes.js
+│   ├── database.js
+│   └── server.js
+├── public/
+│   ├── css/
+│   ├── img/
+│   └── js/
+│       ├── auth.js
+│       └── scripts.js
+├── views/
+│   ├── auth/
+│   │   ├── login.ejs
+│   │   ├── loginAdmin.ejs
+│   │   └── register.ejs
+│   ├── pages/
+│   │   ├── admin.ejs
+│   │   ├── contas.ejs
+│   │   ├── dashboard.ejs
+│   │   └── lancamentos.ejs
+│   ├── partials/
+│   │   ├── footer-auth.ejs
+│   │   ├── footer.ejs
+│   │   ├── header-auth.ejs
+│   │   └── header-home.ejs
+│   └── index.ejs
+├── node_modules/
+├── package.json
+└── readme.md
+```
+
+---
+
+A partir daqui, vou gerar cada um dos arquivos com seu conteúdo completo. Deseja que eu inicie pelos arquivos de backend, views ou front-end (scripts e estilo)?

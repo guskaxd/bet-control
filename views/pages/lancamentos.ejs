@@ -1,0 +1,107 @@
+<%- include('../partials/header') %>
+  <h2>Lançamentos Financeiros</h2>
+
+  <div class="mb-4">
+    <label>Selecionar Contas (Status: Depositada)</label>
+    <div id="listaContasMultiplas" class="d-flex flex-wrap gap-2 mb-2"></div>
+    <select id="descricaoGlobal" class="form-select mb-2" style="max-width: 300px;">
+      <option value="Erro">Erro</option>
+      <option value="Bingo">Bingo</option>
+      <option value="Duvidosa">Duvidosa</option>
+      <option value="Risco">Risco</option>
+      <option value="Finalização Times">Finalização Times</option>
+    </select>
+    <button id="carregarContasSelecionadas" class="btn btn-primary">Carregar</button>
+  </div>
+
+  <div id="formLotes" class="mb-4" style="display: none;">
+    <table class="table table-bordered">
+      <thead>
+        <tr>
+          <th style="background:#f0f0f0">Conta</th>
+          <th>Valor Inicial (Investimento)</th>
+          <th>Valor Final (Retorno)</th>
+        </tr>
+      </thead>
+      <tbody id="tabelaContasSelecionadas"></tbody>
+    </table>
+    <button class="btn btn-success" id="btnLancarTodos">Lançar</button>
+  </div>
+
+  <hr>
+  <h4>Histórico de Lançamentos</h4>
+  <div class="mb-3">
+    <label for="filtroData" class="form-label">Filtrar por Data:</label>
+    <input type="date" id="filtroData" class="form-control" style="max-width: 300px;">
+  </div>
+  <div class="mb-3 d-flex align-items-center gap-2">
+    <button class="btn btn-danger" id="btnExcluirSelecionados">Excluir Selecionados</button>
+    <button class="btn btn-warning" id="btnEditarDataSelecionados">Editar Data Selecionados</button>
+  </div>
+
+  <table class="table table-bordered">
+    <thead>
+      <tr>
+        <th>Selecionar</th>
+        <th>Conta (Casa)</th>
+        <th>Tipo</th>
+        <th>Valor</th>
+        <th>Descrição</th>
+        <th>Data</th>
+        <th>Ação</th>
+      </tr>
+    </thead>
+    <tbody id="listaLancamentos"></tbody>
+  </table>
+
+
+  <!-- Modal de Edição -->
+  <div class="modal fade" id="modalEditarLancamento" tabindex="-1">
+    <div class="modal-dialog">
+      <form class="modal-content" id="formEditarLancamento">
+        <div class="modal-header">
+          <h5 class="modal-title">Editar Lançamento</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body">
+          <input type="hidden" id="editarId">
+          <div class="mb-3">
+            <label for="editarData" class="form-label">Data</label>
+            <input type="date" class="form-control" id="editarData" required>
+          </div>
+          <div class="mb-3">
+            <label for="editarValor" class="form-label">Valor</label>
+            <input type="number" class="form-control" id="editarValor" step="0.01" required>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="submit" class="btn btn-primary">Salvar</button>
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+        </div>
+      </form>
+    </div>
+  </div>
+  
+  <!-- Modal de Edição Múltipla -->
+  <div class="modal fade" id="modalEditarDataMultiplos" tabindex="-1">
+    <div class="modal-dialog">
+      <form class="modal-content" id="formEditarDataMultiplos">
+        <div class="modal-header">
+          <h5 class="modal-title">Editar Data de Lançamentos Selecionados</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body">
+          <div class="mb-3">
+            <label for="novaDataMultiplos" class="form-label">Nova Data</label>
+            <input type="date" class="form-control" id="novaDataMultiplos" required>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="submit" class="btn btn-primary">Salvar</button>
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <%- include('../partials/footer') %>

@@ -1,0 +1,147 @@
+<%- include('../partials/header') %>
+<h2>Dashboard Financeiro</h2>
+<div class="row mb-4">
+  <div class="col-md-3"> <div class="card text-bg-primary">
+      <div class="card-body">
+        <h5>Total Investido</h5>
+        <p id="totalInvestido">R$ 0,00</p>
+      </div>
+    </div>
+  </div>
+  <div class="col-md-3"> <div class="card text-bg-success">
+      <div class="card-body">
+        <h5>Total Retornado</h5>
+        <p id="totalRetornado">R$ 0,00</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-md-3">
+    <div class="card text-bg-info"> <div class="card-body">
+        <h5>Lucro Bruto</h5>
+        <p id="lucroBruto">R$ 0,00</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-md-3"> <div class="card text-bg-warning">
+      <div class="card-body">
+        <h5>Lucro Líquido</h5> <p id="lucroTotal">R$ 0,00</p>
+      </div>
+    </div>
+  </div>
+</div>
+  <div class="card mb-3">
+    <div class="card-body">
+      <canvas id="graficoLucro" style="height:250px"></canvas>
+    </div>
+  </div>
+  <div class="d-flex flex-wrap gap-3 justify-content-between" id="cardsPorDescricao"></div>
+
+  <hr>
+  <div class="card">
+    <div class="card-header d-flex justify-content-between align-items-center">
+      <h5 class="mb-0">Lucro por Dia</h5>
+    </div>
+    <div class="card-body">
+      <div class="mb-3">
+        <label for="filtroDataInicio" class="form-label">Filtrar por Data:</label>
+        <div class="d-flex gap-2" style="max-width: 400px">
+          <input type="date" id="filtroDataInicio" class="form-control">
+          <input type="date" id="filtroDataFim" class="form-control">
+        </div>
+      </div>
+
+      <table class="table table-bordered align-middle">
+        <thead class="table-secondary">
+          <tr>
+            <th>Data</th>
+            <th class="text-danger">Investido</th>
+            <th class="text-success">Retornado</th>
+            <th>Lucro Bruto</th>      <th>Lucro Líquido</th>  </tr>
+          </tr>
+        </thead>
+        <tbody id="tabelaLucroPorDia"></tbody>
+      </table>
+    </div>
+
+  </div>
+  
+<!-- Modal de Informações do Dashboard -->
+<div class="modal fade" id="infoDashboardModal" tabindex="-1" aria-labelledby="infoDashboardModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-lg modal-dialog-centered">
+    <div class="modal-content shadow-lg border-0 rounded-4">
+      <div class="modal-header bg-dark text-white rounded-top-4">
+        <h5 class="modal-title fw-bold" id="infoDashboardModalLabel">📊 Informações do Dashboard</h5>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Fechar"></button>
+      </div>
+      <div class="modal-body p-4">
+
+        <h6>🏆 Top 10 Clientes LucraBet (Semana Passada)</h6>
+        <p>Parabéns aos clientes que mais lucraram na semana passada (📅 de segunda a domingo):</p>
+
+        <ul class="list-group mb-3">
+          <li class="list-group-item d-flex justify-content-between align-items-center">
+            🥇 <strong>pedrosouzza0511</strong> 
+            <span class="badge bg-success rounded-pill">R$ 20.757,00</span>
+          </li>
+          <li class="list-group-item d-flex justify-content-between align-items-center">
+            🥈 <strong>kaikearruda54321</strong> 
+            <span class="badge bg-success rounded-pill">R$ 13.836,65</span>
+          </li>
+          <li class="list-group-item d-flex justify-content-between align-items-center">
+            🥉 <strong>carlospaim1905</strong> 
+            <span class="badge bg-success rounded-pill">R$ 12.885,00</span>
+          </li>
+          <li class="list-group-item d-flex justify-content-between align-items-center">
+            <strong>danielgomes4425</strong> 
+            <span class="badge bg-success rounded-pill">R$ 10.823,00</span>
+          </li>
+          <li class="list-group-item d-flex justify-content-between align-items-center">
+            <strong>gustavowhariston19</strong> 
+            <span class="badge bg-success rounded-pill">R$ 10.094,00</span>
+          </li>
+          <li class="list-group-item d-flex justify-content-between align-items-center">
+            <strong>jacksonbrito013</strong> 
+            <span class="badge bg-success rounded-pill">R$ 7.764,30</span>
+          </li>
+          <li class="list-group-item d-flex justify-content-between align-items-center">
+            <strong>matheus25santoos</strong> 
+            <span class="badge bg-success rounded-pill">R$ 6.985,59</span>
+          </li>
+          <li class="list-group-item d-flex justify-content-between align-items-center">
+            <strong>oviitingod</strong> 
+            <span class="badge bg-success rounded-pill">R$ 5.696,76</span>
+          </li>
+          <li class="list-group-item d-flex justify-content-between align-items-center">
+            <strong>felipeluis441</strong> 
+            <span class="badge bg-success rounded-pill">R$ 5.564,00</span>
+          </li>
+          <li class="list-group-item d-flex justify-content-between align-items-center">
+            <strong>roniI46525</strong> 
+            <span class="badge bg-success rounded-pill">R$ 5.221,00</span>
+          </li>
+        </ul>
+
+        <p class="text-center fw-bold text-success">🎉 Parabéns a todos os clientes que lucraram com a LucraBet na última semana! 🚀</p>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Fechar</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+
+
+    <script>
+  document.addEventListener("DOMContentLoaded", () => {
+    // Abre modal de novidades apenas no dashboard
+    const modalNovidades = new bootstrap.Modal(document.getElementById("infoDashboardModal"));
+    modalNovidades.show();
+
+  });
+  </script>
+
+	<script src="" async></script>
+  <%- include('../partials/footer') %>

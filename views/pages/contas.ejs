@@ -1,0 +1,87 @@
+<%- include('../partials/header') %>
+  <div class="d-flex justify-content-between align-items-center mb-3">
+  <h2>Contas de Aposta</h2>
+  <button class="btn btn-success" data-bs-toggle="modal" data-bs-target="#modalAdicionarConta">
+    + Adicionar Nova
+  </button>
+</div>
+  <div class="row" id="kanbanContas">
+    <div class="col-md-3">
+      <h5>Nova</h5>
+      <div class="kanban-col" id="nova"></div>
+    </div>
+    <div class="col-md-3">
+      <h5>Depositada</h5>
+      <div class="kanban-col" id="depositada"></div>
+    </div>
+    <div class="col-md-3">
+      <h5>Limitada</h5>
+      <div class="kanban-col" id="limitada"></div>
+    </div>
+    <div class="col-md-3">
+      <h5>Perdida</h5>
+      <div class="kanban-col" id="perdida"></div>
+    </div>
+  </div>
+
+  <div class="modal fade" id="modalContaDetalhes" tabindex="-1" aria-labelledby="tituloModalConta" aria-hidden="true">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title" id="tituloModalConta">Detalhes da Conta</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fechar"></button>
+        </div>
+        <div class="modal-body">
+          <p><strong>Email:</strong> <span id="modalContaEmail"></span></p>
+          <p><strong>Investimento:</strong> R$ <span id="modalContaInvestido"></span></p>
+          <p><strong>Retorno:</strong> R$ <span id="modalContaRetornado"></span></p>
+          <p><strong>Lucro:</strong> R$ <span id="modalContaLucro"></span></p>
+          <hr>
+          <p><strong>Repasse:</strong> % <span id="modalRepasse"></span></p>
+          
+          <form id="formEditarValorInicial">
+            <div class="mb-3">
+              <label for="modalValorInicialInput" class="form-label"><strong>Valor Inicial:</strong></label>
+              <div class="input-group">
+                <span class="input-group-text">R$</span>
+                <input type="number" step="0.01" class="form-control" id="modalValorInicialInput" name="valorDepositado" required>
+              </div>
+            </div>
+            <button type="submit" class="btn btn-success btn-sm">Salvar Novo Valor Inicial</button>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+  
+  <!-- Modal Adicionar Conta -->
+  <div class="modal fade" id="modalAdicionarConta" tabindex="-1" aria-labelledby="tituloModalAdicionar" aria-hidden="true">
+    <div class="modal-dialog">
+      <form id="formConta" class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title" id="tituloModalAdicionar">Nova Conta</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fechar"></button>
+        </div>
+        <div class="modal-body">
+          <div class="mb-3"><input type="text" name="nome" class="form-control" placeholder="Nome" required></div>
+          <div class="mb-3"><input type="email" name="email" class="form-control" placeholder="Email (Opcional)"></div>
+          <div class="mb-3"><input type="text" name="casa" class="form-control" placeholder="Casa de Aposta" required></div>
+          <div class="mb-3"><input type="number" name="valorDepositado" class="form-control" placeholder="Valor Depositado (Opcional)" required></div>
+          <div class="mb-3"><input type="number" name="repasse" class="form-control" placeholder="% Repasse (apenas número)" required></div>
+          <div class="mb-3">
+            <select name="status" class="form-select">
+              <option>Nova</option>
+              <option>Depositada</option>
+              <option>Limitada</option>
+              <option>Perdida</option>
+            </select>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button class="btn btn-success w-100">Salvar</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <%- include('../partials/footer') %>
