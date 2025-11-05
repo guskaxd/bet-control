@@ -106,6 +106,41 @@ module.exports = {
     return rows;
   },
 
+  lucroBrutoPorContaEDescricao: async (usuario_id) => {
+    const [rows] = await db.query(
+      `SELECT
+         c.id AS conta_id,
+         c.repasse,
+         l.descricao,
+         IFNULL(SUM(CASE WHEN l.tipo = 'Retorno' THEN l.valor ELSE 0 END), 0) AS totalRetornado,
+         IFNULL(SUM(CASE WHEN l.tipo = 'Investimento' THEN l.valor ELSE 0 END), 0) AS totalInvestido
+       FROM contas c
+       LEFT JOIN lancamentos l ON c.id = l.conta_id AND l.usuario_id = ?
+       WHERE c.usuario_id = ?
+       GROUP BY c.id, c.repasse, l.descricao`,
+      [usuario_id, usuario_id]
+    );
+    return rows;
+  },
+
+  lucroBrutoPorDiaContaDescricao: async (usuario_id) => {
+    const [rows] = await db.query(`
+      SELECT 
+        DATE(l.data) AS dia,
+        l.conta_id,
+        c.repasse,
+        l.descricao,
+        SUM(CASE WHEN l.tipo = 'Retorno' THEN l.valor ELSE 0 END) AS retornado,
+        SUM(CASE WHEN l.tipo = 'Investimento' THEN l.valor ELSE 0 END) AS investido
+      FROM lancamentos l
+      JOIN contas c ON l.conta_id = c.id
+      WHERE l.usuario_id = ?
+      GROUP BY DATE(l.data), l.conta_id, c.repasse, l.descricao
+      ORDER BY DATE(l.data) DESC
+    `, [usuario_id]);
+    return rows;
+  },
+  
   excluir: async (id, usuario_id) => {
     await db.query(
       "DELETE FROM lancamentos WHERE id = ? AND usuario_id = ?",

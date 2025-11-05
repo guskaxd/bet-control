@@ -41,40 +41,46 @@ module.exports = {
   totais: async (req, res) => {
     try {
       const usuarioId = req.session.user.id;
-      const totaisPorConta = await Lancamento.totaisAgrupadosPorConta(usuarioId);
+      // 1. Busca os resultados agrupados por operação (descrição)
+      const resultados = await Lancamento.lucroBrutoPorContaEDescricao(usuarioId);
 
       let totalInvestidoGlobal = 0;
       let totalRetornadoGlobal = 0;
       let lucroLiquidoGlobal = 0;
 
-      totaisPorConta.forEach(conta => {
-        const investido = parseFloat(conta.totalInvestido);
-        const retornado = parseFloat(conta.totalRetornado);
-        const repasse = parseFloat(conta.repasse) || 0;
+      // 2. Itera sobre CADA operação
+      resultados.forEach(r => {
+        const investido = parseFloat(r.totalInvestido);
+        const retornado = parseFloat(r.totalRetornado);
+        const repasse = parseFloat(r.repasse) || 0;
 
         totalInvestidoGlobal += investido;
         totalRetornadoGlobal += retornado;
 
-        const lucroBruto = retornado - investido;
-        const lucroLiquido = lucroBruto > 0 ? lucroBruto * (1 - repasse / 100) : lucroBruto;
-        lucroLiquidoGlobal += lucroLiquido;
+        const lucroBrutoOperacao = retornado - investido;
+
+        // 3. APLICA A COMISSÃO APENAS SE A OPERAÇÃO FOI LUCRATIVA
+        const lucroLiquidoOperacao = lucroBrutoOperacao > 0 
+          ? lucroBrutoOperacao * (1 - repasse / 100) 
+          : lucroBrutoOperacao;
+        
+        lucroLiquidoGlobal += lucroLiquidoOperacao;
       });
 
       const lucroBrutoGlobal = totalRetornadoGlobal - totalInvestidoGlobal;
 
-      // Esta resposta JSON é a correta, com os 4 valores
       res.json({
         totalInvestido: totalInvestidoGlobal,
         totalRetornado: totalRetornadoGlobal,
         lucroBruto: lucroBrutoGlobal,
-        lucroTotal: lucroLiquidoGlobal 
+        lucroTotal: lucroLiquidoGlobal // Agora é a soma dos lucros líquidos das operações
       });
 
     } catch (err) {
       console.error(err);
       res.status(500).json({ erro: "Erro ao calcular totais" });
     }
-},
+  },
 
   lucroPorData: async (req, res) => {
     try {
@@ -90,26 +96,27 @@ module.exports = {
   lucrosPorConta: async (req, res) => {
     try {
       const usuarioId = req.session.user.id;
-
-      // 1. Busca os totais de investimento, retorno E o repasse de cada conta
-      const totaisPorConta = await Lancamento.totaisAgrupadosPorConta(usuarioId);
+      const resultados = await Lancamento.lucroBrutoPorContaEDescricao(usuarioId);
       
-      const lucroMap = {};
+      const lucroMap = {}; // [conta_id] => lucroLiquidoTotal
 
-      // 2. Itera sobre cada conta para calcular o lucro líquido individualmente
-      totaisPorConta.forEach(conta => {
-        const investido = parseFloat(conta.totalInvestido);
-        const retornado = parseFloat(conta.totalRetornado);
-        const repasse = parseFloat(conta.repasse) || 0;
+      resultados.forEach(r => {
+        if (!lucroMap[r.conta_id]) {
+          lucroMap[r.conta_id] = 0;
+        }
+
+        const investido = parseFloat(r.totalInvestido);
+        const retornado = parseFloat(r.totalRetornado);
+        const repasse = parseFloat(r.repasse) || 0;
         
-        // Calcula o lucro bruto da conta
-        const lucroBruto = retornado - investido;
+        const lucroBrutoOperacao = retornado - investido;
         
-        // 3. Aplica a comissão de repasse apenas se o lucro for positivo
-        const lucroLiquido = lucroBruto > 0 ? lucroBruto * (1 - repasse / 100) : lucroBruto;
+        // Aplica comissão por operação
+        const lucroLiquidoOperacao = lucroBrutoOperacao > 0 
+          ? lucroBrutoOperacao * (1 - repasse / 100) 
+          : lucroBrutoOperacao;
         
-        // Adiciona o resultado ao mapa que será enviado
-        lucroMap[conta.conta_id] = lucroLiquido;
+        lucroMap[r.conta_id] += lucroLiquidoOperacao;
       });
 
       res.json(lucroMap);
@@ -161,31 +168,49 @@ module.exports = {
       const usuarioId = req.session.user.id;
       const contaId = req.params.id;
 
-      // Busca os totais de investimento e retorno
-      const totais = await Lancamento.totaisPorConta(contaId, usuarioId);
-      // Busca os dados da conta para pegar o repasse
-      const conta = await Conta.buscarPorId(contaId, usuarioId);
+      // Usamos a mesma função de modelo, mas vamos filtrar os resultados para esta conta
+      const resultados = await Lancamento.lucroBrutoPorContaEDescricao(usuarioId);
+      const resultadosConta = resultados.filter(r => r.conta_id == contaId);
 
-      if (!conta) {
-        return res.status(404).json({ erro: "Conta não encontrada." });
+      let totalInvestido = 0;
+      let totalRetornado = 0;
+      let lucroLiquidoTotal = 0;
+      let repasseConta = 0;
+
+      if (resultadosConta.length === 0) {
+        // Se a conta não tem lançamentos, busca os dados da conta
+        const conta = await Conta.buscarPorId(contaId, usuarioId);
+        return res.json({ 
+          totalInvestido: 0, 
+          totalRetornado: 0, 
+          lucro: 0, 
+          repasse: conta ? conta.repasse : 0 
+        });
       }
 
-      // Converte os valores para número
-      const investido = parseFloat(totais.totalInvestido);
-      const retornado = parseFloat(totais.totalRetornado);
-      const repasse = parseFloat(conta.repasse) || 0;
+      repasseConta = parseFloat(resultadosConta[0].repasse) || 0;
 
-      // Calcula o lucro bruto
-      const lucroBruto = retornado - investido;
+      resultadosConta.forEach(r => {
+        const investido = parseFloat(r.totalInvestido);
+        const retornado = parseFloat(r.totalRetornado);
 
-      // Aplica o repasse APENAS se o lucro for positivo
-      const lucroLiquido = lucroBruto > 0 ? lucroBruto * (1 - repasse / 100) : lucroBruto;
+        totalInvestido += investido;
+        totalRetornado += retornado;
 
-      // Retorna o objeto com o lucro já calculado corretamente
+        const lucroBrutoOperacao = retornado - investido;
+        
+        const lucroLiquidoOperacao = lucroBrutoOperacao > 0 
+          ? lucroBrutoOperacao * (1 - repasseConta / 100) 
+          : lucroBrutoOperacao;
+        
+        lucroLiquidoTotal += lucroLiquidoOperacao;
+      });
+
       res.json({
-        totalInvestido: investido,
-        totalRetornado: retornado,
-        lucro: lucroLiquido, // A chave 'lucro' agora contém o valor líquido
+        totalInvestido: totalInvestido,
+        totalRetornado: totalRetornado,
+        lucro: lucroLiquidoTotal, // A chave 'lucro' é usada pelo frontend
+        repasse: repasseConta
       });
 
     } catch (err) {
@@ -197,16 +222,14 @@ module.exports = {
   lucrosDetalhadosPorDia: async (req, res) => {
     try {
       const usuarioId = req.session.user.id;
-      // 1. Busca os lucros agrupados por dia e por conta
-      const lucrosPorConta = await Lancamento.lucroBrutoPorDiaEConta(usuarioId);
+      // 1. Busca os resultados agrupados por dia, conta E descrição
+      const resultados = await Lancamento.lucroBrutoPorDiaContaDescricao(usuarioId);
 
-      const resultadoPorDia = {};
+      const resultadoPorDia = {}; // Objeto para agrupar os resultados finais por dia
 
-      // 2. Processa cada registro para calcular o lucro líquido
-      lucrosPorConta.forEach(r => {
+      resultados.forEach(r => {
         const dia = r.dia.toISOString().split('T')[0];
         
-        // Inicializa o dia se for a primeira vez que o vemos
         if (!resultadoPorDia[dia]) {
           resultadoPorDia[dia] = {
             dia: dia,
@@ -217,21 +240,27 @@ module.exports = {
           };
         }
 
-        // Calcula os lucros para este registro específico (de uma conta em um dia)
-        const lucroBrutoConta = r.retornado - r.investido;
-        const lucroLiquidoConta = lucroBrutoConta > 0 
-            ? lucroBrutoConta * (1 - r.repasse / 100) 
-            : lucroBrutoConta;
+        const investido = parseFloat(r.investido);
+        const retornado = parseFloat(r.retornado);
+        const repasse = parseFloat(r.repasse) || 0;
+
+        // Soma os totais brutos do dia
+        resultadoPorDia[dia].totalInvestido += investido;
+        resultadoPorDia[dia].totalRetornado += retornado;
+
+        const lucroBrutoOperacao = retornado - investido;
         
-        // 3. Soma os valores aos totais do dia
-        resultadoPorDia[dia].totalInvestido += r.investido;
-        resultadoPorDia[dia].totalRetornado += r.retornado;
-        resultadoPorDia[dia].lucroBruto += lucroBrutoConta;
-        resultadoPorDia[dia].lucroLiquido += lucroLiquidoConta;
+        // Aplica repasse SÓ SE a operação (dia/conta/descrição) foi lucrativa
+        const lucroLiquidoOperacao = lucroBrutoOperacao > 0 
+            ? lucroBrutoOperacao * (1 - repasse / 100) 
+            : lucroBrutoOperacao;
+        
+        // Soma os lucros líquidos/brutos da operação aos totais do dia
+        resultadoPorDia[dia].lucroBruto += lucroBrutoOperacao;
+        resultadoPorDia[dia].lucroLiquido += lucroLiquidoOperacao;
       });
 
-      // 4. Converte o objeto em um array e envia como resposta
-      const arrayResultado = Object.values(resultadoPorDia);
+      const arrayResultado = Object.values(resultadoPorDia).sort((a, b) => new Date(b.dia) - new Date(a.dia));
       res.json(arrayResultado);
 
     } catch (err) {
