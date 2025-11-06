@@ -108,38 +108,62 @@ module.exports = {
 
   lucroBrutoPorOperacao: async (usuario_id) => {
     const [rows] = await db.query(
-      `SELECT
-         c.id AS conta_id,
-         c.repasse,
-         l.operacao_id,
-         IFNULL(SUM(CASE WHEN l.tipo = 'Retorno' THEN l.valor ELSE 0 END), 0) AS totalRetornado,
-         IFNULL(SUM(CASE WHEN l.tipo = 'Investimento' THEN l.valor ELSE 0 END), 0) AS totalInvestido
-       FROM contas c
-       LEFT JOIN lancamentos l ON c.id = l.conta_id AND l.usuario_id = ?
-       WHERE c.usuario_id = ? AND l.operacao_id IS NOT NULL
-       GROUP BY c.id, c.repasse, l.operacao_id`,
-      [usuario_id, usuario_id]
+      `
+      -- Parte 1: Lógica NOVA para lançamentos com operacao_id
+      (SELECT
+         c.id AS conta_id, c.repasse, l.operacao_id,
+         SUM(CASE WHEN l.tipo = 'Retorno' THEN l.valor ELSE 0 END) AS totalRetornado,
+         SUM(CASE WHEN l.tipo = 'Investimento' THEN l.valor ELSE 0 END) AS totalInvestido
+       FROM lancamentos l
+       JOIN contas c ON l.conta_id = c.id
+       WHERE l.usuario_id = ? AND l.operacao_id IS NOT NULL
+       GROUP BY c.id, c.repasse, l.operacao_id)
+      
+      UNION ALL
+      
+      -- Parte 2: Lógica ANTIGA para lançamentos sem operacao_id (agrupando por descrição)
+      (SELECT
+         c.id AS conta_id, c.repasse, NULL AS operacao_id,
+         SUM(CASE WHEN l.tipo = 'Retorno' THEN l.valor ELSE 0 END) AS totalRetornado,
+         SUM(CASE WHEN l.tipo = 'Investimento' THEN l.valor ELSE 0 END) AS totalInvestido
+       FROM lancamentos l
+       JOIN contas c ON l.conta_id = c.id
+       WHERE l.usuario_id = ? AND l.operacao_id IS NULL
+       GROUP BY c.id, c.repasse, l.descricao)
+      `,
+      [usuario_id, usuario_id] // O parâmetro é usado duas vezes
     );
     return rows;
-  },
+},
 
-  lucroBrutoPorDiaOperacao: async (usuario_id) => {
-    const [rows] = await db.query(`
-      SELECT 
-        DATE(l.data) AS dia,
-        l.conta_id,
-        c.repasse,
-        l.operacao_id,
-        SUM(CASE WHEN l.tipo = 'Retorno' THEN l.valor ELSE 0 END) AS retornado,
-        SUM(CASE WHEN l.tipo = 'Investimento' THEN l.valor ELSE 0 END) AS investido
-      FROM lancamentos l
-      JOIN contas c ON l.conta_id = c.id
-      WHERE l.usuario_id = ? AND l.operacao_id IS NOT NULL
-      GROUP BY DATE(l.data), l.conta_id, c.repasse, l.operacao_id
-      ORDER BY DATE(l.data) DESC
-    `, [usuario_id]);
-    return rows;
-  },
+lucroBrutoPorDiaOperacao: async (usuario_id) => {
+  const [rows] = await db.query(`
+    -- Parte 1: Lógica NOVA para lançamentos com operacao_id
+    (SELECT 
+      DATE(l.data) AS dia, l.conta_id, c.repasse, l.operacao_id,
+      SUM(CASE WHEN l.tipo = 'Retorno' THEN l.valor ELSE 0 END) AS retornado,
+      SUM(CASE WHEN l.tipo = 'Investimento' THEN l.valor ELSE 0 END) AS investido
+    FROM lancamentos l
+    JOIN contas c ON l.conta_id = c.id
+    WHERE l.usuario_id = ? AND l.operacao_id IS NOT NULL
+    GROUP BY DATE(l.data), l.conta_id, c.repasse, l.operacao_id)
+    
+    UNION ALL
+    
+    -- Parte 2: Lógica ANTIGA para lançamentos sem operacao_id (agrupando por descrição)
+    (SELECT 
+      DATE(l.data) AS dia, l.conta_id, c.repasse, NULL AS operacao_id,
+      SUM(CASE WHEN l.tipo = 'Retorno' THEN l.valor ELSE 0 END) AS retornado,
+      SUM(CASE WHEN l.tipo = 'Investimento' THEN l.valor ELSE 0 END) AS investido
+    FROM lancamentos l
+    JOIN contas c ON l.conta_id = c.id
+    WHERE l.usuario_id = ? AND l.operacao_id IS NULL
+    GROUP BY DATE(l.data), l.conta_id, c.repasse, l.descricao)
+    
+    ORDER BY dia DESC
+  `, [usuario_id, usuario_id]); // O parâmetro é usado duas vezes
+  return rows;
+},
 
   excluir: async (id, usuario_id) => {
     await db.query(
