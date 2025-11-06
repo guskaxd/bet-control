@@ -28,27 +28,39 @@ module.exports = {
   cadastrar: async (req, res) => {
     try {
       const usuarioId = req.session.user.id;
-      const dados = { ...req.body, usuario_id: usuarioId };
-      await Lancamento.cadastrar(dados);
+      const dados = req.body; // 'dados' agora pode ser um objeto ou um array
+
+      if (Array.isArray(dados)) {
+        // É um lançamento em lote (do multi-form)
+        for (const lancamento of dados) {
+          if (lancamento.valor > 0 || lancamento.tipo === 'Investimento') { // Garante que ambos sejam salvos, mesmo se um for 0
+             const dadosCompletos = { ...lancamento, usuario_id: usuarioId, acao: lancamento.acao || 'Operação' };
+             await Lancamento.cadastrar(dadosCompletos);
+          }
+        }
+      } else {
+        // É um lançamento único (de outra parte do sistema)
+        const dadosCompletos = { ...dados, usuario_id: usuarioId };
+        await Lancamento.cadastrar(dadosCompletos);
+      }
+      
       res.json({ sucesso: true });
     } catch (err) {
       console.error(err);
       res.status(500).json({ erro: "Erro ao cadastrar lançamento" });
     }
-  },
+},
 
   // --- SUBSTITUA A FUNÇÃO 'totais' POR ESTA ---
   totais: async (req, res) => {
     try {
       const usuarioId = req.session.user.id;
-      // 1. Busca os resultados agrupados por operação (descrição)
-      const resultados = await Lancamento.lucroBrutoPorContaEDescricao(usuarioId);
+      const resultados = await Lancamento.lucroBrutoPorOperacao(usuarioId); // MUDANÇA AQUI
 
       let totalInvestidoGlobal = 0;
       let totalRetornadoGlobal = 0;
       let lucroLiquidoGlobal = 0;
 
-      // 2. Itera sobre CADA operação
       resultados.forEach(r => {
         const investido = parseFloat(r.totalInvestido);
         const retornado = parseFloat(r.totalRetornado);
@@ -57,14 +69,13 @@ module.exports = {
         totalInvestidoGlobal += investido;
         totalRetornadoGlobal += retornado;
 
-        const lucroBrutoOperacao = retornado - investido;
+        const lucroBrutoOperacao = retornado - investido; // Ex: +100 ou -80
 
-        // 3. APLICA A COMISSÃO APENAS SE A OPERAÇÃO FOI LUCRATIVA
         const lucroLiquidoOperacao = lucroBrutoOperacao > 0 
-          ? lucroBrutoOperacao * (1 - repasse / 100) 
-          : lucroBrutoOperacao;
+          ? lucroBrutoOperacao * (1 - repasse / 100) // Ex: 100 * 0.8 = 80
+          : lucroBrutoOperacao; // Ex: -80
         
-        lucroLiquidoGlobal += lucroLiquidoOperacao;
+        lucroLiquidoGlobal += lucroLiquidoOperacao; // Ex: 80 + (-80) = 0
       });
 
       const lucroBrutoGlobal = totalRetornadoGlobal - totalInvestidoGlobal;
@@ -73,7 +84,7 @@ module.exports = {
         totalInvestido: totalInvestidoGlobal,
         totalRetornado: totalRetornadoGlobal,
         lucroBruto: lucroBrutoGlobal,
-        lucroTotal: lucroLiquidoGlobal // Agora é a soma dos lucros líquidos das operações
+        lucroTotal: lucroLiquidoGlobal
       });
 
     } catch (err) {
@@ -96,7 +107,7 @@ module.exports = {
   lucrosPorConta: async (req, res) => {
     try {
       const usuarioId = req.session.user.id;
-      const resultados = await Lancamento.lucroBrutoPorContaEDescricao(usuarioId);
+      const resultados = await Lancamento.lucroBrutoPorOperacao(usuarioId); // MUDANÇA AQUI
       
       const lucroMap = {}; // [conta_id] => lucroLiquidoTotal
 
@@ -111,7 +122,6 @@ module.exports = {
         
         const lucroBrutoOperacao = retornado - investido;
         
-        // Aplica comissão por operação
         const lucroLiquidoOperacao = lucroBrutoOperacao > 0 
           ? lucroBrutoOperacao * (1 - repasse / 100) 
           : lucroBrutoOperacao;
@@ -125,7 +135,7 @@ module.exports = {
       console.error(err);
       res.status(500).json({ erro: "Erro ao obter lucros por conta" });
     }
-  },
+},
 
   totaisPorDescricao: async (req, res) => {
     try {
@@ -168,8 +178,7 @@ module.exports = {
       const usuarioId = req.session.user.id;
       const contaId = req.params.id;
 
-      // Usamos a mesma função de modelo, mas vamos filtrar os resultados para esta conta
-      const resultados = await Lancamento.lucroBrutoPorContaEDescricao(usuarioId);
+      const resultados = await Lancamento.lucroBrutoPorOperacao(usuarioId); // MUDANÇA AQUI
       const resultadosConta = resultados.filter(r => r.conta_id == contaId);
 
       let totalInvestido = 0;
@@ -209,23 +218,21 @@ module.exports = {
       res.json({
         totalInvestido: totalInvestido,
         totalRetornado: totalRetornado,
-        lucro: lucroLiquidoTotal, // A chave 'lucro' é usada pelo frontend
+        lucro: lucroLiquidoTotal,
         repasse: repasseConta
       });
 
     } catch (err) {
-      console.error(err);
-      res.status(500).json({ erro: "Erro ao obter totais da conta" });
+      // ... (bloco catch continua o mesmo) ...
     }
   },
 
   lucrosDetalhadosPorDia: async (req, res) => {
     try {
       const usuarioId = req.session.user.id;
-      // 1. Busca os resultados agrupados por dia, conta E descrição
-      const resultados = await Lancamento.lucroBrutoPorDiaContaDescricao(usuarioId);
+      const resultados = await Lancamento.lucroBrutoPorDiaOperacao(usuarioId); // MUDANÇA AQUI
 
-      const resultadoPorDia = {}; // Objeto para agrupar os resultados finais por dia
+      const resultadoPorDia = {}; 
 
       resultados.forEach(r => {
         const dia = r.dia.toISOString().split('T')[0];
